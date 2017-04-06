@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sec.security.dao.SecAclDao">
+	<resultMap id="acl" type="secAcl"> 
+		<result property="id" column="id" />
+		<result property="menuId" column="menu_id" />
+		<result property="code" column="code" />
+		<result property="name" column="name" />
+		<result property="pattern" column="url_pattern" />
+		<result property="orderNum" column="order_num" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+	</resultMap>
+	
+	<resultMap id="aclRole" type="secAcl">
+		<result property="id" column="id" />
+		<result property="menuId" column="menu_id" />
+		<result property="code" column="code" />
+		<result property="name" column="name" />
+		<result property="pattern" column="url_pattern" />
+		<result property="orderNum" column="order_num" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+		<collection property="roles" ofType="secRole">
+			<result property="id" column="r_id" />
+			<result property="code" column="r_code" />
+			<result property="name" column="r_name" />
+			<result property="enabled" column="r_enabled" />
+		</collection>
+	</resultMap>
+	<!-- 分页查询 -->
+	<select id="list" parameterType="map" resultMap="acl">
+		select * from sec_acl t
+		<include refid="listCondition" />
+		<if test="start !=null and start !=-1 ">
+			limit #{start}, #{limit}
+		</if>
+	</select>
+	<!-- 分页查询记录条数 -->
+	<select id="count" parameterType="map" resultType="int">
+		select count(1) from sec_acl t
+		<include refid="listCondition" />
+	</select>
+	<!-- 分页查询条件 -->
+	<sql id="listCondition">
+		<where>
+			<if test="id != null and id >=0 ">
+				and t.id =#{id}
+			</if>
+			<if test="menuId != null and menuId >=0 ">
+				and t.menu_id =#{menuId}
+			</if>
+			<if test="code != null and code != '' ">
+				and t.code =#{code}
+			</if>
+			<if test="name != null and name !='' ">
+				and t.name like CONCAT(CONCAT('%', #{name}),'%')
+			</if>
+			<if test="urlPattern != null and urlPattern != '' ">
+				and t.url_pattern =#{urlPattern}
+			</if>
+			<if test="orderNum != null and orderNum >=0 ">
+				and t.order_num =#{orderNum}
+			</if>
+			<if test="createTimeStart != null and createTimeStart !=''  ">
+				and t.create_time &gt;= #{createTimeStart}
+			</if>
+			<if test="createTimeEnd != null and createTimeEnd !='' ">
+				and t.create_time &lt; DATE_ADD(#{createTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND))
+			</if>
+			<if test="modifyTimeStart != null and modifyTimeStart !=''  ">
+				and t.modify_time &gt;= #{modifyTimeStart}
+			</if>
+			<if test="modifyTimeEnd != null and modifyTimeEnd !='' ">
+				and t.modify_time &lt; DATE_ADD(#{modifyTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND))
+			</if>
+		</where>
+	</sql>
+	<!-- 插入新记录 -->
+	<insert id="create" parameterType="secAcl">
+		insert into sec_acl (
+		id,
+		menu_id,
+		code,
+		name,
+		url_pattern,
+		order_num,
+		create_time,
+		modify_time
+		) values (
+		#{id},
+		#{menuId},
+		#{code},
+		#{name},
+		#{pattern},
+		#{orderNum},
+		now(),
+		#{modifyTime}
+		)
+		<selectKey resultType="long" order="AFTER" keyProperty="id">
+			select LAST_INSERT_ID() as id
+		</selectKey>
+	</insert>
+	<!-- 修改记录 -->
+	<update id="update" parameterType="map">
+		update sec_acl t
+		<set>
+			t.modify_time =now()
+			
+			<if test="menuId != null ">
+				,t.menu_id = #{menuId}
+			</if>
+			<if test="code != null ">
+				,t.code = #{code}
+			</if>
+			<if test="name != null ">
+				,t.name = #{name}
+			</if>
+			<if test="pattern != null ">
+				,t.url_pattern = #{pattern}
+			</if>
+			<if test="orderNum != null ">
+				,t.order_num = #{orderNum}
+			</if>
+			
+		</set>
+		<where>
+			t.id = #{id}
+		</where>
+	</update>
+	<!-- 单笔删除记录 -->
+	<delete id="delete" parameterType="long">
+		delete from sec_acl where id = #{id}
+	</delete>
+	<!-- 批量删除记录 -->
+	<delete id="deletes" parameterType="long">
+		delete from sec_acl where id in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<delete id="deleteByMenuId" parameterType="long">
+		delete from sec_acl where menu_id in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<select id="get" parameterType="Long" resultMap="acl">
+		select * from sec_acl where id=#{id}
+	</select>
+	
+	<select id="selectAclRoles"  resultMap="aclRole">
+		SELECT t.*,r.code AS r_code,r.id AS r_id,r.enabled AS r_enabled,r.name AS r_name 
+		FROM sec_acl t
+		LEFT JOIN sec_role_acl ra ON t.id=ra.acl_id
+		LEFT JOIN sec_role r ON ra.role_id=r.id
+	</select>
+</mapper>

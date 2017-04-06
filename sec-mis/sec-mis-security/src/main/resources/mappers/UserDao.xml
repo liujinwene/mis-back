@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sec.security.dao.SecUserDao">
+	<resultMap id="user" type="secUser">
+		<result property="id" column="id" />
+		<result property="username" column="username" />
+		<result property="password" column="password" />
+		<result property="enabled" column="enabled" />
+		<result property="accountNonExpired" column="account_non_expired" />
+		<result property="accountNonLocked" column="account_non_locked" />
+		<result property="credentialsNonExpired" column="credentials_non_expired" />
+		<result property="realname" column="realname" />
+		<result property="address" column="address" />
+		<result property="certId" column="cert_id" />
+		<result property="email" column="email" />
+		<result property="mobile" column="mobile" />
+		<result property="phone" column="phone" />
+		<result property="qq" column="qq" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+		<result property="lastLoginTime" column="last_login_time" />
+	</resultMap>
+	<!-- 分页查询 -->
+	<select id="list" parameterType="map" resultMap="user">
+		select * from sec_user t
+		<include refid="listCondition" />
+		<if test="start !=null and start !=-1 ">
+			limit #{start}, #{limit}
+		</if>
+	</select>
+	<!-- 分页查询记录条数 -->
+	<select id="count" parameterType="map" resultType="int">
+		select count(1) from sec_user t
+		<include refid="listCondition" />
+	</select>
+	<!-- 分页查询条件 -->
+	<sql id="listCondition">
+		<where>
+			<if test="id != null and id >=0 ">
+				and t.id =#{id}
+			</if>
+			<if test="username != null and username !='' ">
+				and t.username like CONCAT(CONCAT('%', #{username}),'%')
+			</if>
+			<if test="password != null and password != '' ">
+				and t.password =#{password}
+			</if>
+			<if test="enabled != null and enabled >=0 ">
+				and t.enabled =#{enabled}
+			</if>
+			<if test="accountNonExpired != null and accountNonExpired >=0 ">
+				and t.account_non_expired =#{accountNonExpired}
+			</if>
+			<if test="accountNonLocked != null and accountNonLocked >=0 ">
+				and t.account_non_locked =#{accountNonLocked}
+			</if>
+			<if test="credentialsNonExpired != null and credentialsNonExpired >=0 ">
+				and t.credentials_non_expired =#{credentialsNonExpired}
+			</if>
+			<if test="realname != null and realname !='' ">
+				and t.realname like CONCAT(CONCAT('%', #{realname}),'%')
+			</if>
+			<if test="address != null and address !='' ">
+				and t.address like CONCAT(CONCAT('%', #{address}),'%')
+			</if>
+			<if test="certId != null and certId != '' ">
+				and t.cert_id =#{certId}
+			</if>
+			<if test="email != null and email != '' ">
+				and t.email  like CONCAT(CONCAT('%', #{email}),'%')
+			</if>
+			<if test="mobile != null and mobile != '' ">
+				and t.mobile like CONCAT(CONCAT('%', #{mobile}),'%')
+			</if>
+			<if test="phone != null and phone != '' ">
+				and t.phone like CONCAT(CONCAT('%', #{phone}),'%')
+			</if>
+			<if test="qq != null and qq != '' ">
+				and t.qq like CONCAT(CONCAT('%', #{qq}),'%')
+			</if>
+			<if test="createTimeStart != null and createTimeStart !=''  ">
+				and t.create_time &gt;= #{createTimeStart}
+			</if>
+			<if test="createTimeEnd != null and createTimeEnd !='' ">
+				and t.create_time &lt; DATE_ADD(#{createTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND)
+			</if>
+			<if test="modifyTimeStart != null and modifyTimeStart !=''  ">
+				and t.modify_time &gt;= #{modifyTimeStart}
+			</if>
+			<if test="modifyTimeEnd != null and modifyTimeEnd !='' ">
+				and t.modify_time &lt; DATE_ADD(#{modifyTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND)
+			</if>
+			<if test="lastLoginTimeStart != null and lastLoginTimeStart !=''  ">
+				and t.last_login_time &gt;= #{lastLoginTimeStart}
+			</if>
+			<if test="lastLoginTimeEnd != null and lastLoginTimeEnd !='' ">
+				and t.last_login_time &lt; DATE_ADD(#{lastLoginTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND)
+			</if>
+		</where>
+	</sql>
+	<!-- 插入新记录 -->
+	<insert id="create" parameterType="secUser">
+		insert into sec_user (
+		id,
+		username,
+		password,
+		enabled,
+		account_non_expired,
+		account_non_locked,
+		credentials_non_expired,
+		realname,
+		address,
+		cert_id,
+		email,
+		mobile,
+		phone,
+		qq,
+		create_time,
+		modify_time,
+		last_login_time,
+		aduitPass
+		) values (
+		#{id},
+		#{username},
+		#{password},
+		#{enabled},
+		#{accountNonExpired},
+		#{accountNonLocked},
+		#{credentialsNonExpired},
+		#{realname},
+		#{address},
+		#{certId},
+		#{email},
+		#{mobile},
+		#{phone},
+		#{qq},
+		#{createTime},
+		#{modifyTime},
+		#{lastLoginTime},
+		#{aduitPass}
+		)
+		<selectKey resultType="long" order="AFTER" keyProperty="id">
+			select LAST_INSERT_ID() as id
+		</selectKey>
+	</insert>
+	<!-- 修改记录 -->
+	<update id="update" parameterType="map">
+		update sec_user t
+		<set>
+			t.modify_time =now()
+			
+			<if test="username != null ">
+				,t.username = #{username}
+			</if>
+			<if test="password != null ">
+				,t.password = #{password}
+			</if>
+			<if test="enabled != null ">
+				,t.enabled = #{enabled}
+			</if>
+			<if test="accountNonExpired != null ">
+				,t.account_non_expired = #{accountNonExpired}
+			</if>
+			<if test="accountNonLocked != null ">
+				,t.account_non_locked = #{accountNonLocked}
+			</if>
+			<if test="credentialsNonExpired != null ">
+				,t.credentials_non_expired = #{credentialsNonExpired}
+			</if>
+			<if test="realname != null ">
+				,t.realname = #{realname}
+			</if>
+			<if test="address != null ">
+				,t.address = #{address}
+			</if>
+			<if test="certId != null ">
+				,t.cert_id = #{certId}
+			</if>
+			<if test="email != null ">
+				,t.email = #{email}
+			</if>
+			<if test="mobile != null ">
+				,t.mobile = #{mobile}
+			</if>
+			<if test="phone != null ">
+				,t.phone = #{phone}
+			</if>
+			<if test="qq != null ">
+				,t.qq = #{qq}
+			</if>
+			<if test="lastLoginTime != null ">
+				,t.last_login_time = #{lastLoginTime}
+			</if>
+			<if test="aduitPass != null and aduitPass !='' ">
+				,t.aduitPass = #{aduitPass}
+			</if>
+			
+		</set>
+		<where>
+			t.id = #{id}
+		</where>
+	</update>
+	<!-- 单笔删除记录 -->
+	<delete id="delete" parameterType="long">
+		delete from sec_user where id = #{id}
+	</delete>
+	<!-- 批量删除记录 -->
+	<delete id="deletes" parameterType="long">
+		delete from sec_user where id in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<!-- 删除用户的角色关系 -->
+	<delete id="deleteUserRole"  parameterType="long">
+		delete from sec_user_role where user_id in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<select id="get" parameterType="long" resultMap="user">
+		select * from sec_user where id = #{id}
+	</select>
+	
+	<select id="getUserByName" parameterType="String" resultMap="user">
+		select * from sec_user where username = #{userName}
+	</select> 
+	
+	<insert id="saveUserRole" parameterType="map">
+	 insert into sec_user_role(user_id,role_id) values
+	 <foreach item="roleId" index="index" collection="roleIds" separator=",">
+			(#{userId},#{roleId})
+		</foreach>
+	</insert>
+	<!-- 删除用户-渠道关系 -->
+	<delete id="deleteUserChannel"  parameterType="long">
+		delete from sec_user_channel where userId in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	<!-- 保存用户-渠道关系 -->
+	<insert id="saveUserChannel" parameterType="map">
+		 insert into sec_user_channel(userId,channelId) values
+		 <foreach item="channelId" index="index" collection="channelIds" separator=",">
+				(#{userId},#{channelId})
+		</foreach>
+	</insert>
+</mapper>

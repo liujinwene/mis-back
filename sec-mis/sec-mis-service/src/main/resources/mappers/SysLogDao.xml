@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sec.security.dao.SysLogDao">
+	<!-- 插入新记录 -->
+	<insert id="createSysLog" parameterType="sysLog">
+		insert into sys_log (
+		operator,
+		operate_content,
+		operate_type,
+		operate_time
+		) values (
+		#{operator},
+		#{operateContent},
+		#{operateType},
+		#{operateTime}
+		)
+	</insert>
+	<sql id="select">
+		SELECT
+		l.operator,
+		l.operate_content as operateContent,
+		l.operate_type as operateType,
+		l.operate_time as operateTime,
+		u.username as userName,
+		u.realname as realName
+		FROM sys_log l ,sec_user u
+		WHERE l.operator = u.id
+	</sql>
+	<!-- 统计 -->
+	<select id="countSysLog" parameterType="map" resultType="int">
+		select count(1) from  sys_log l ,sec_user u WHERE l.operator =
+		u.id
+		<include refid="listCondition"></include>
+	</select>
+	<!-- 分页查询 -->
+	<select id="listSysLog" parameterType="map" resultType="sysLog">
+		<include refid="select" />
+		<include refid="listCondition" />
+		order by l.operate_time desc
+		<if test="start !=null and start !=-1 ">
+			limit #{start}, #{limit}
+		</if>
+	</select>
+	<!-- 查询条件 -->
+	<sql id="listCondition">
+		<if test="userName != null and userName !=''">
+			and u.username like concat('%',#{userName},'%' )
+		</if>
+		<if test="createTimeStart != null and createTimeStart !=''">
+			and l.operate_time >= #{createTimeStart}
+		</if>
+		<if test="createTimeEnd != null  and createTimeEnd != ''">
+			and l.operate_time &lt;= #{createTimeEnd}
+		</if>
+		<if test="operateContent != null and operateContent !=''">
+			and l.operate_content like concat('%',#{operateContent},'%' )
+		</if>
+		<if test="operateType != null and operateType >= 0">
+			and l.operate_type = #{operateType}
+		</if>
+	</sql>
+
+
+</mapper>

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sec.security.dao.SecMenuDao">
+	<resultMap id="secMenu" type="secMenu">
+		<result property="id" column="id" />
+		<result property="parentId" column="parent_id" />
+		<result property="name" column="name" />
+		<result property="location" column="location" />
+		<result property="position" column="position" />
+		<result property="target" column="target" />
+		<result property="icon" column="icon" />
+		<result property="orderNum" column="order_num" />
+		<result property="display" column="display" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+	</resultMap>
+	
+	<resultMap id="menuRole" type="secMenu">
+		<result property="id" column="id" />
+		<result property="parentId" column="parent_id" />
+		<result property="name" column="name" />
+		<result property="location" column="location" />
+		<result property="position" column="position" />
+		<result property="target" column="target" />
+		<result property="icon" column="icon" />
+		<result property="orderNum" column="order_num" />
+		<result property="display" column="display" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+		<collection property="roles" ofType="secRole">
+			<result property="id" column="r_id" />
+			<result property="code" column="r_code" />
+			<result property="name" column="r_name" />
+			<result property="enabled" column="r_enabled" />
+			<result property="remark" column="r_remark" />
+		</collection>
+	</resultMap>
+	
+	<resultMap id="menuAndChildren" type="secMenu">
+		<result property="id" column="id" />
+		<result property="parentId" column="parent_id" />
+		<result property="name" column="name" />
+		<result property="location" column="location" />
+		<result property="position" column="position" />
+		<result property="target" column="target" />
+		<result property="icon" column="icon" />
+		<result property="orderNum" column="order_num" />
+		<result property="display" column="display" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+		<collection property="children" javaType="ArrayList" column="id" ofType="menu" select="selectChildren"/>
+	</resultMap>
+	
+	<!-- 分页查询 -->
+	<select id="list" parameterType="map" resultMap="secMenu">
+		select * from sec_menu t
+		<include refid="listCondition" />
+		<if test="start !=null and start !=-1 ">
+			limit #{start}, #{limit}
+		</if>
+	</select>
+	<!-- 分页查询记录条数 -->
+	<select id="count" parameterType="map" resultType="int">
+		select count(1) from sec_menu t
+		<include refid="listCondition" />
+	</select>
+	<!-- 分页查询条件 -->
+	<sql id="listCondition">
+		<where>
+			
+			<if test="parentId != null and parentId >=0 ">
+				and t.parent_id =#{parentId}
+			</if>
+			<if test="name != null and name !='' ">
+				and t.name like CONCAT(CONCAT('%', #{name}),'%')
+			</if>
+			<if test="location != null and location != '' ">
+				and t.location =#{location}
+			</if>
+			<if test="position != null and position != '' ">
+				and t.position =#{position}
+			</if>
+			<if test="target != null and target != '' ">
+				and t.target =#{target}
+			</if>
+			<if test="icon != null and icon != '' ">
+				and t.icon =#{icon}
+			</if>
+			<if test="orderNum != null and orderNum != '' ">
+				and t.order_num =#{orderNum}
+			</if>
+			<if test="display != null and display >=0 ">
+				and t.display =#{display}
+			</if>
+			<if test="createTimeStart != null and createTimeStart !=''  ">
+				and t.create_time &gt;= #{createTimeStart}
+			</if>
+			<if test="createTimeEnd != null and createTimeEnd !='' ">
+				and t.create_time &lt; DATE_ADD(#{createTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND))
+			</if>
+			<if test="modifyTimeStart != null and modifyTimeStart !=''  ">
+				and t.modify_time &gt;= #{modifyTimeStart}
+			</if>
+			<if test="modifyTimeEnd != null and modifyTimeEnd !='' ">
+				and t.modify_time &lt; DATE_ADD(#{modifyTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND))
+			</if>
+		</where>
+	</sql>
+	<!-- 插入新记录 -->
+	<insert id="create" parameterType="secMenu">
+		insert into sec_menu (
+		id,
+		parent_id,
+		name,
+		location,
+		position,
+		target,
+		icon,
+		order_num,
+		display,
+		create_time,
+		modify_time
+		) values (
+		#{id},
+		#{parentId},
+		#{name},
+		#{location},
+		#{position},
+		#{target},
+		#{icon},
+		#{orderNum},
+		#{display},
+		#{createTime},
+		#{modifyTime}
+		)
+		<selectKey resultType="long" order="AFTER" keyProperty="id">
+			select LAST_INSERT_ID() as id
+		</selectKey>
+	</insert>
+	<!-- 修改记录 -->
+	<update id="update" parameterType="map">
+		update sec_menu t
+		<set>
+			t.modify_time =now()
+			
+			<if test="parentId != null ">
+				,t.parent_id = #{parentId}
+			</if>
+			<if test="name != null ">
+				,t.name = #{name}
+			</if>
+			<if test="location != null ">
+				,t.location = #{location}
+			</if>
+			<if test="position != null ">
+				,t.position = #{position}
+			</if>
+			<if test="target != null ">
+				,t.target = #{target}
+			</if>
+			<if test="icon != null ">
+				,t.icon = #{icon}
+			</if>
+			<if test="orderNum != null ">
+				,t.order_num = #{orderNum}
+			</if>
+			<if test="display != null ">
+				,t.display = #{display}
+			</if>
+			<if test="createTime != null ">
+				,t.create_time = #{createTime}
+			</if>
+			<if test="modifyTime != null ">
+				,t.modify_time = #{modifyTime}
+			</if>
+		</set>
+		<where>
+			t.id = #{id}
+		</where>
+	</update>
+	<!-- 单笔删除记录 -->
+	<delete id="delete" parameterType="long">
+		delete from sec_menu where id = #{id}
+	</delete>
+	<!-- 批量删除记录 -->
+	<delete id="deletes" parameterType="long">
+		delete from sec_menu where id in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<select id="get"  parameterType="Long"  resultMap="secMenu">
+		select * from sec_menu where id=#{id}
+	</select>
+	<!-- menu中有roles -->
+	<select id="selectMenuRoles"  parameterType="map"  resultMap="menuRole">
+		SELECT t.*,r.code AS r_code,r.id AS r_id,r.enabled AS r_enabled,r.name AS r_name FROM sec_menu t
+		LEFT JOIN sec_role_menu rm ON t.id=rm.menu_id
+		LEFT JOIN sec_role r ON rm.role_id=r.id
+		<include refid="listCondition" />
+	</select>
+	
+	
+	<select id="selectAndChildren" parameterType="Long" resultMap="menuAndChildren">
+		select * from sec_menu where id=#{id}
+	</select>
+	
+	<select id="selectChildren" parameterType="Long" resultMap="menuAndChildren">
+		select * from sec_menu where parent_id=#{pparentId}
+	</select>
+</mapper>

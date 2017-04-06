@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:sec="http://www.springframework.org/schema/security"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop-3.2.xsd
+           http://www.springframework.org/schema/security
+           http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+	<sec:http pattern="/images/**" security="none" />
+	<sec:http pattern="/js/**" security="none" />
+	<sec:http pattern="/3rd/**" security="none" />
+	<sec:http pattern="/css/**" security="none" />
+	<sec:http pattern="/tmp/**" security="none" />
+	<sec:http pattern="/demo/**" security="none" />
+	<sec:http pattern="/test/**" security="none" />
+
+	<sec:http pattern="/login.do" security="none" />
+	<sec:http pattern="/login/login.do" security="none" />
+	<sec:http pattern="/login/failure.do" security="none" /> 
+	 
+	<sec:http pattern="/thirdPartyPayOrderConfirm/**" security="none" />
+	
+	<sec:http access-denied-page="/403.jsp" >
+		<sec:form-login login-page="/login.do" authentication-failure-url="/login.do?error=1" default-target-url="/home.do"/>
+		<sec:logout logout-url="/logout.do" logout-success-url="/login.do"/>  
+		<sec:custom-filter ref="urlSecurityInterceptor" before="FILTER_SECURITY_INTERCEPTOR" />
+	
+	</sec:http>
+
+
+	<!-- ~~~~~~~~~~ authenticationManager ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<sec:authentication-manager alias="authenticationManager">
+		<sec:authentication-provider ref="daoAuthenticationProvider" />
+	</sec:authentication-manager>
+
+	<bean id="daoAuthenticationProvider" class="com.sec.security.authentication.DaoAuthenticationProvider">
+		<property name="passwordEncoder" ref="passwordEncoder"/>
+	</bean>
+
+	<bean id="saltSource" class="org.springframework.security.authentication.dao.ReflectionSaltSource">
+		<property name="userPropertyToUse" value="passwordSalt"/>
+	</bean>
+	
+	<bean id="passwordEncoder" class="org.springframework.security.crypto.password.StandardPasswordEncoder">
+		<constructor-arg index="0" value="cmeo!2d*,xd"/>
+	</bean>
+
+	<!-- ~~~~~~~~~~ urlSecurityInterceptor ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+	<bean id="urlSecurityInterceptor" class="com.sec.security.filter.FilterSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="accessDecisionManager" ref="accessDecisionManager" />
+	</bean>
+
+	<!-- ~~~~~~~~~~ accessDecisionManager ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<bean id="accessDecisionManager" class="org.springframework.security.access.vote.AffirmativeBased">
+		<constructor-arg>
+			<list>
+				<bean class="org.springframework.security.access.vote.RoleVoter"></bean>
+			</list>
+		</constructor-arg>
+	</bean>
+
+	<!-- ~~~~~~~~~~ methodSecurityInterceptor ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+	<bean id="methodSecurityInterceptor" class="com.sec.security.filter.MethodSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager" />
+		<property name="accessDecisionManager" ref="accessDecisionManager" />
+	</bean>
+
+	<aop:config>
+		<aop:pointcut id="securityPointcut" expression="execution(public * com.sec..*.*Service.*(..))" />
+		<aop:advisor advice-ref="accessDeniedInterceptor" pointcut-ref="securityPointcut" order="0" />
+		<aop:advisor advice-ref="methodSecurityInterceptor" pointcut-ref="securityPointcut" order="1" />
+	</aop:config>
+
+	<bean id="accessDeniedInterceptor" class="com.sec.security.filter.AccessDeniedInterceptor" />
+
+	<import resource="classpath*:spring-permission-sync.xml"/>
+</beans>

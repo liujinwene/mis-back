@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.sec.security.dao.SecRoleDao">
+	<resultMap id="secRole" type="secRole">
+		<result property="id" column="id" />
+		<result property="code" column="code" />
+		<result property="name" column="name" />
+		<result property="enabled" column="enabled" />
+		<result property="remark" column="remark" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+	</resultMap>
+	
+	<resultMap id="roleAll" type="secRole">
+		<result property="id" column="id" />
+		<result property="code" column="code" />
+		<result property="name" column="name" />
+		<result property="enabled" column="enabled" />
+		<result property="remark" column="remark" />
+		<result property="createTime" column="create_time" />
+		<result property="modifyTime" column="modify_time" />
+		<collection property="menus" ofType="secMenu">
+			<result property="id" column="m_id" />
+			<result property="parentId" column="m_parent_id" />
+			<result property="name" column="m_name" />
+			<result property="location" column="m_location" />
+			<result property="position" column="m_position" />
+			<result property="icon" column="m_icon" />
+			<result property="orderNum" column="m_order_num" />
+			<result property="display" column="m_display" />
+		</collection>
+		<collection property="acls" ofType="secAcl">
+			<result property="id" column="a_id" />
+			<result property="menuId" column="a_menu_id" />
+			<result property="code" column="a_code" />
+			<result property="name" column="a_name" />
+			<result property="pattern" column="a_url_pattern" />
+			<result property="orderNum" column="a_order_num" />
+		</collection>
+	</resultMap>
+	
+	<!-- 分页查询 -->
+	<select id="list" parameterType="map" resultMap="secRole">
+		select * from sec_role t
+		<include refid="listCondition" />
+		<if test="start !=null and start !=-1 ">
+			limit #{start}, #{limit}
+		</if>
+	</select>
+	<!-- 分页查询记录条数 -->
+	<select id="count" parameterType="map" resultType="int">
+		select count(1) from sec_role t
+		<include refid="listCondition" />
+	</select>
+	<!-- 分页查询条件 -->
+	<sql id="listCondition">
+		<where>
+			<if test="id != null and id >=0 ">
+				and t.id =#{id}
+			</if>
+			<if test="code != null and code != '' ">
+				and t.code =#{code}
+			</if>
+			<if test="name != null and name !='' ">
+				and t.name like CONCAT(CONCAT('%', #{name}),'%')
+			</if>
+			<if test="enabled != null and enabled >=0 ">
+				and t.enabled =#{enabled}
+			</if>
+			<if test="remark != null and remark !='' ">
+				and t.remark like CONCAT(CONCAT('%', #{remark}),'%')
+			</if>
+			<if test="createTimeStart != null and createTimeStart !=''  ">
+				and t.create_time &gt;= #{createTimeStart}
+			</if>
+			<if test="createTimeEnd != null and createTimeEnd !='' ">
+				and t.create_time &lt; DATE_ADD(#{createTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND))
+			</if>
+			<if test="modifyTimeStart != null and modifyTimeStart !=''  ">
+				and t.modify_time &gt;= #{modifyTimeStart}
+			</if>
+			<if test="modifyTimeEnd != null and modifyTimeEnd !='' ">
+				and t.modify_time &lt; DATE_ADD(#{modifyTimeEnd} ,INTERVAL '1 0:0:0' DAY_SECOND))
+			</if>
+		</where>
+	</sql>
+	<!-- 插入新记录 -->
+	<insert id="create" parameterType="secRole">
+		insert into sec_role (
+		id,
+		code,
+		name,
+		enabled,
+		remark,
+		create_time,
+		modify_time
+		) values (
+		#{id},
+		#{code},
+		#{name},
+		#{enabled},
+		#{remark},
+		now(),
+		#{modifyTime}
+		)
+		<selectKey resultType="long" order="AFTER" keyProperty="id">
+			select LAST_INSERT_ID() as id
+		</selectKey>
+	</insert>
+	<!-- 修改记录 -->
+	<update id="update" parameterType="map">
+		update sec_role t
+		<set>
+			t.modify_time =now()
+			
+			<if test="code != null ">
+				,t.code = #{code}
+			</if>
+			<if test="name != null ">
+				,t.name = #{name}
+			</if>
+			<if test="enabled != null ">
+				,t.enabled = #{enabled}
+			</if>
+			<if test="remark != null ">
+				,t.remark = #{remark}
+			</if>
+		</set>
+		<where>
+			t.id = #{id}
+		</where>
+	</update>
+	<!-- 单笔删除记录 -->
+	<delete id="delete" parameterType="long">
+		delete from sec_role where id = #{id}
+	</delete>
+	<!-- 批量删除记录 -->
+	<delete id="deletes" parameterType="long">
+		delete from sec_role where id in
+		<foreach item="id" index="index" collection="array" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+	
+	<select id="getRoleByUserId" parameterType="long" resultMap="roleAll">
+		SELECT r.*,
+		m.id AS m_id, m.parent_id AS m_parent_id, m.location AS m_location,m.name AS m_name,m.order_num AS m_order_num,m.position AS m_position,m.display AS m_display,m.icon AS m_icon, 
+		a.id AS a_id, a.menu_id AS a_menu_id, a.code AS a_code, a.name AS a_name, a.url_pattern AS a_url_pattern,a.order_num AS a_order_num
+		FROM sec_role r
+		INNER JOIN sec_user_role ur ON r.id=ur.role_id
+		LEFT JOIN sec_role_menu rm ON r.id=rm.role_id
+		LEFT JOIN sec_menu m ON rm.menu_id=m.id
+		LEFT JOIN sec_role_acl ra ON r.id=ra.role_id
+		LEFT JOIN sec_acl a ON a.id=ra.acl_id
+		WHERE ur.user_id=#{userId}	
+	</select>
+
+	<select id="get"  parameterType="long" resultMap="secRole">
+		SELECT r.* FROM sec_role r where r.id=#{id}	
+	</select>
+	
+	
+	<select id="getAll"  parameterType="long" resultMap="roleAll">
+		SELECT r.*,
+		m.id AS m_id, m.parent_id AS m_parent_id, m.location AS m_location,m.name AS m_name,m.order_num AS m_order_num,m.position AS m_position, m.display AS m_display, m.icon AS m_icon,
+		a.id AS a_id, a.menu_id AS a_menu_id, a.code AS a_code, a.name AS a_name, a.url_pattern AS a_url_pattern,a.order_num AS a_order_num
+		FROM sec_role r
+		LEFT JOIN sec_role_menu rm ON r.id=rm.role_id
+		LEFT JOIN sec_menu m ON rm.menu_id=m.id
+		LEFT JOIN sec_role_acl ra ON r.id=ra.role_id
+		LEFT JOIN sec_acl a ON a.id=ra.acl_id
+		where r.id=#{id}	
+	</select>
+	
+	
+	<insert id="saveRoleMenu" parameterType="map">
+		insert into sec_role_menu(role_id,menu_id) values
+		<foreach item="menuId" index="index" collection="menuIds" separator=",">
+			(#{roleId},#{menuId})
+		</foreach>
+	</insert>
+	
+	<insert id="saveRoleAcl" parameterType="map">
+		insert into sec_role_acl(role_id,acl_id) values
+		<foreach item="aclId" index="index" collection="aclIds" separator=",">
+			(#{roleId},#{aclId})
+		</foreach>
+	</insert>
+	
+	<delete id="deleteMenuByRoleId" parameterType="Long">
+		delete from sec_role_menu where role_id=#{roleId}
+	</delete>
+	
+	
+	<delete id="deleteAclByRoleId" parameterType="Long">
+		delete from sec_role_acl where role_id=#{roleId}
+	</delete>
+</mapper>
